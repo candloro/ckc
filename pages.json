@@ -1,0 +1,51 @@
+{
+	"pages": [ 
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "cxc",
+				 "navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/my/my",
+			"style": {
+				"navigationBarTitleText": "cxc",
+				 "navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/rewardRecord/index",
+			"style": {
+				"navigationBarTitleText": "奖励纪录",
+				 "navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/releaseRecord/releaseRecord",
+			"style" : 
+			{
+				"navigationBarTitleText" : "释放纪录",
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path" : "pages/claim/claim",
+			"style" : 
+			{
+				"navigationBarTitleText" : "Claim",
+				"navigationStyle": "custom"
+
+			}
+		}
+	
+	
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "cxc",
+		"navigationBarBackgroundColor": "#F8F8F8",
+		"backgroundColor": "#F8F8F8"
+	},
+	"uniIdRouter": {}
+}
