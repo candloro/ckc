@@ -28,33 +28,34 @@ export const getMiningRewards = () => {
 /* 获取奖励 */
 export const getHoldersRewards = (address) => {
   return request({
-    url: `/holders/rewards?address=${address}`,
+    url: `/holders/rewards`,
     method: 'get',
   })
 }
 
 /* 获取用户信息 */
-export const getUserInfo = (address) => {
+export const getUserInfo = () => {
   return request({
-    url: `/users/info?address=${address}`,
+    url: `/users/info`,
     method: 'get',
   })
 }
 
 /* 绑定邀请码 */
-export const bindInviteCode = (inviteCode) => {
+export const bindInviteCode = (data) => {
+  
   return request({
     url: '/users/bindInviteCode',
     method: 'post',
-    data: { inviteCode },
+    data
   })
 }
 
 /* 获取交易记录 */
-export const getTransactionsList = ({address ,type }) => {
+export const getTransactionsList = ({type }) => {
 	console.log(type,"type");
   return request({
-    url: `/transactions/list?address=${address}&type=${type}`,
+    url: `/transactions/list?type=${type}`,
     method: 'get',
   })
 }

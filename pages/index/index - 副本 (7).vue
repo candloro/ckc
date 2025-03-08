@@ -1,7 +1,7 @@
 <template>
 	<view class="content">
 		<view class="headerBox">
-			<view class="leftBox" @click="goUserInfo">
+			<view class="leftBox" @click="goUserInfo" >
 				<image src="../../static/home/one.png" class="oneImage" />
 				<view class="hello">hi , cxc</view>
 			</view>
@@ -10,7 +10,7 @@
 					<!-- <view class="address" @click="connectAndRequestAccount">
             连接钱包
           </view> -->
-					<p class="address" @click="connectAndRequestAccount">
+					<p class="address" @click="connectWallet">
 						{{ publicKey ? formatPublicKey(publicKey) : "连接钱包" }}
 					</p>
 					<view class="addressBox">
@@ -38,12 +38,11 @@
 		</view>
 		<view class="myBox">
 			<view class="my">我的资产</view>
-			<image src="../../static/home/eye1.png" @click="hideMony" class="eyes" />
+			<image src="../../static/home/eye1.png" class="eyes" />
 		</view>
 		<view class="boxTwo">
 			<view class="zeroBox">
-				<view class="zero" v-if="hideMonyShow">1165.59</view>
-				<view class="zero" v-else style="width: 286rpx;">******</view>
+				<view class="zero">1165.59</view>
 			</view>
 			<view class="zero1">
 				<view class="c">CXC</view>
@@ -64,21 +63,18 @@
 			</view>
 			<view class="fourRight">
 				<image src="/static/home/four.png" class="fourOne" />
-				<view class="fourTwo">
-					{{isString(totalMiningReward)?totalMiningReward: Number(totalMiningReward).toFixed(5)}}</view>
-				<view class="fourThree">{{isString(earnedRewards)?earnedRewards: Number(earnedRewards).toFixed(5)}}
-				</view>
-				<view class="fourPut">{{ isString(pendingRewards)?pendingRewards: Number(pendingRewards).toFixed(5)}}
-				</view>
+				<view class="fourTwo">2000cxc</view>
+				<view class="fourThree">1680cxc</view>
+				<view class="fourPut">335cxc</view>
 				<div class="progress-container">
 					<div class="progress-bar" id="progressBar">
-						<span class="progress-text" id="progressText">5%</span>
+						<span class="progress-text" id="progressText">0%</span>
 					</div>
 				</div>
 			</view>
 		</view>
 		<view class="boxFive">
-			<view class="force">算力挖矿</view>
+			<view class="force" @click="open">算力挖矿</view>
 			<view class="force1" @click="releaseRecord">释放记录 ></view>
 		</view>
 		<view class="boxSix">
@@ -115,21 +111,21 @@
 				</view>
 			</view>
 			<view class="intoBox">
-				<img class="chestBlue" v-if="current_stage_number == 1" src="/static/home/ChestBlue.png" alt="" />
-				<img class="chestRed" v-if="current_stage_number == 2" src="/static/home/ChestRed.png" alt="" />
+				<img class="chestBlue" src="/static/home/ChestBlue.png" alt="" />
+				<img class="chestRed" src="/static/home/ChestRed.png" alt="" />
 			</view>
 		</view>
-
+		
 		<view class="copyBox">
 			<view class="copyBox1">
-				<image src="/static/home/five.png" class="copy3" @click="open" />
-				<view class="copy1" @click="open"> 邀请链接：{{invitedUrl}} </view>
-				<view class="copy2" @click="copyUrlHandle">复制</view>
+				<image src="/static/home/five.png" class="copy3" />
+				<view class="copy1"> 邀请链接：Http://sjdw.com </view>
+				<view class="copy2" @click="copyUrl">复制</view>
 			</view>
 		</view>
 
 		<!-- 测试 -->
-		<view class="" v-if="false">
+		<view class="" v-if="true">
 			<!-- 2 -->
 			<button @click="fakeLogin">fake login</button>
 		</view>
@@ -141,7 +137,7 @@
 					<view class="code">邀请码绑定</view>
 				</view>
 				<view class="please">
-					<input type="text" placeholder="请绑定邀请码" v-model="inviteCode" />
+					<input type="text" placeholder="请绑定邀请码" v-model="invitationCode" />
 				</view>
 				<view class="mustBox">
 					<view class="must">*必须绑定邀请码才能进入第二阶段挖矿</view>
@@ -167,10 +163,7 @@
 	import bs58 from "bs58"
 	import nacl from "tweetnacl";
 	import {
-		login,
-		getStagesInfo,
-		getMiningRewards,
-		bindInviteCode
+		login
 	} from '@/api/index.js'
 
 	// 
@@ -179,48 +172,32 @@
 	} from '@solana/web3.js';
 
 	export default {
+		data() {
+			return {
+				publicKey: null, // 钱包地址
+				signature: null, // 签名
+				nonce: null, // 随机数
+				popupVisible: false,
+				invitationCode: '', // 邀请码
+				// 校验状态
+				verificationResult: null,
+			};
+		},
 		methods: {
-			isString(value) {
-				return typeof value === 'string';
+			// 
+			async getUserInfoApi(){
+				let address  = uni.getStorageSync('address')
+				let res =  await getUserInfo(address)
+				this.model = {...this.model,...res}
 			},
-			hideMony() {
-				if (!this.publicKey) return
-				this.hideMonyShow = !this.hideMonyShow
-			},
-			startRewardTimer() {
-				// 每隔 5 秒调用一次 getMiningRewardsApi
-				this.intervalId = setInterval(() => {
-					this.getMiningRewardsApi();
-				}, 1000); // 5000 毫秒 = 5 秒
-			},
-			stopRewardTimer() {
-				if (this.intervalId) {
-					clearInterval(this.intervalId); // 清除定时器
-					this.intervalId = null;
-				}
-			},
-			// 计算挖矿算力奖励
-			async getMiningRewardsApi() {
-				let res = await getMiningRewards()
-				this.earnedRewards = res.data.earnedRewards
-				this.pendingRewards = res.data.pendingRewards
-				this.perSecondReward = res.data.perSecondReward
-				this.totalMiningReward = res.data.totalMiningReward
-			},
-			// 查询阶段信息 
-			async getStagesInfoApi() {
-				let res = await getStagesInfo()
-				this.current_stage_number = res.data.current_stage_number
-				this.remaining_days = res.data.remaining_days
-				console.log(res, 'getStagesInfo');
-			},
-			// 我的
+			
 			goUserInfo() {
 				console.log('1231');
 				uni.navigateTo({
-					url: '/pages/claim/claim'
+					url:'/pages/claim/claim'
 				})
 			},
+
 			// 获取当前的 Solana 钱包实例
 			getSolana() {
 				if (!window.solana?.isPhantom) {
@@ -229,50 +206,157 @@
 				}
 				return window.solana;
 			},
-			// 登录接口
-			async loginApi({
-				address,
-				nonce,
-				signature
-			}) {
-				const data = {
-					address,
-					nonce,
+			
+			async connectWallet() {
+				const solana = this.getSolana();
+				if (!solana) return;
+				console.log('连接钱包中...');
+				try {
+					// 如果已经连接，则直接获取公钥
+					if (solana.isConnected) {
+						this.publicKey = solana.publicKey.toString();
+						console.log("当前钱包地址:", this.publicKey);
+						await this.getNonce(); // 连接后直接获取随机数
+						return;
+					}else{
+						// 请求连接钱包
+						const response = await solana.connect();
+						this.publicKey = response.publicKey.toString();
+						console.log("当前钱包地址:", this.publicKey);	
+						await this.getNonce(); // 连接后获取随机数
+					}
+				} catch (error) {
+					console.log(error,"error");
+					if (error.code === 4001) {
+						alert("用户拒绝了连接请求");
+					} else {
+						console.error("连接失败:", error);
+					}
+				}
+			},
+			// 获取随机数
+			async getNonce() {
+				
+				function generateValidNonce() {
+				    const allowedChars = "123456789ABCDEFGHIJKLMNabcdefghijklmnopqrstuvwxyz";
+				    const length = Math.floor(Math.random() * (44 - 10 + 1)) + 10; // 随机生成一个10到44之间的长度
+				    let nonce = '';
+				
+				    for (let i = 0; i < length; i++) {
+				        const randomIndex = Math.floor(Math.random() * allowedChars.length);
+				        nonce += allowedChars[randomIndex];
+				    }
+				
+				    return nonce;
+				}
+				
+				// const nonce = Math.floor(Math.random() * 1e8).toString(); // 生成0到99999999之间的随机数
+				const nonce = generateValidNonce()
+				this.nonce = nonce
+				await this.requestSignature()
+				return nonce
+			},
+			// 获取签名
+			async requestSignature() {
+				const solana = this.getSolana();
+				if (!solana) return;
+				console.log('请求签名中...',this.nonce);
+				
+				const encodedMessage = new TextEncoder().encode(this.nonce);
+				const {
 					signature
+				} = await solana.signMessage(encodedMessage, "utf8");
+				const base58Signature = bs58.encode(signature);
+				this.signature = base58Signature
+								// return
+				
+		
+				// console.log("签名值（Base58）：", base58Signature);
+				
+				await this.loginApi()
+			},
+
+			// 登录接口
+			async loginApi(base58Signature) {
+
+				const data = {
+					address:  this.publicKey,
+					nonce:  bs58.encode(this.nonce),
+					// nonce:  this.nonce,
+					signature:  this.signature,
+					// signature:  base58Signature ,
 				};
+										console.log("登录数据:", data);
 				// 请求登录接口
 				try {
 					const response = await login(data); // 你的登录API方法
-					console.log("登录成功: 的女路", response);
-
-					if (response.data) {
-						setToken(response.data.token)
-						this.getStagesInfoApi()
-						// 开启定时其
-						this.startRewardTimer()
-						// 显示余额
-						this.hideMony()
-					}
+					console.log("登录成功:", response);
 					// 进一步处理登录成功的响应，例如保存 token 或跳转等
 				} catch (error) {
 					console.error("登录失败:", error);
 				}
 			},
 
-			// 确认邀请接口
-			async bindInviteCodeApi() {
-				const response = await bindInviteCode({
-					inviteCode: this.inviteCode
-				}); // 你的登录API方法
-				console.log('12312', response);
 
+			fakeLogin() {
+				async function main() {
+					// 1. 生成一个 Solana Keypair（相当于 Phantom 钱包）
+					const keypair = Keypair.generate();
+					console.log("Public Key:", keypair.publicKey.toBase58());
+					console.log("Private Key:", bs58.encode(keypair.secretKey)); // 不要暴露这个！
+
+					// 2. 生成随机 nonce（字符串）
+					// const nonce = Math.floor(Math.random() * 1e6).toString();
+					const nonce = Math.floor(Math.random() * 1e8).toString(); // 生成0到99999999之间的随机数
+
+
+
+					// 3. 使用 Solana 私钥进行 Ed25519 签名
+					const message = new TextEncoder().encode(nonce);
+					const signature = nacl.sign.detached(message, keypair.secretKey);
+
+					console.log("Signature:", bs58.encode(signature));
+
+					// 4. 发送请求到后端
+					// http://47.84.41.231:300/auth/login
+					const response = await fetch("http://47.84.41.231:3000/auth/login", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json"
+						},
+						body: JSON.stringify({
+							address: keypair.publicKey.toBase58(), // 钱包地址
+							signature: bs58.encode(signature), // 转换为 Base58
+							nonce: bs58.encode(message), // 确保后端能够正确解析
+						}),
+					});
+					// 保存钱包地址
+					uni.setStorageSync('address',keypair.publicKey.toBase58())
+					
+
+					const data = await response.json();
+					console.log("JWT Token:", data);
+					// 还有一个问题 这里我不是有token了吗 
+					console.log(data.token, 'token');
+					if (data.token) {
+						console.log('报错token成功');
+						setToken(data.token)
+					}
+
+					// 5. 解析 Token 这下面有什么用
+					const payload = JSON.parse(Buffer.from(data.token.split(".")[1], "base64").toString());
+					const exp = payload.exp * 1000; // exp 是 Unix 时间戳（秒），转换成毫秒
+					console.log("exp:", exp);
+				}
+
+				main()
 			},
+
+
+
 			// 确认邀请
 			invitationCodeConfirm() {
 				console.log('231');
-				if (this.inviteCode) {
-					this.bindInviteCodeApi()
-				}
 				this.off()
 			},
 			purseBox() {
@@ -295,8 +379,6 @@
 				this.$refs.popup.close();
 			},
 			open() {
-				console.log('open');
-				this.inviteCode = ''
 				this.$refs.popup.open("center");
 			},
 			togglePopup() {
@@ -305,18 +387,8 @@
 			whitePopup() {
 				this.popupVisible = false;
 			},
-			copyUrlHandle() {
-				let that = this
-				let invitedUrl = that.invitedUrl
-				uni.setClipboardData({
-					data: invitedUrl,
-					success: function() {
-						uni.showToast({
-							title: '复制成功',
-							icon: 'none'
-						})
-					}
-				});
+			copyUrl(){
+				
 			},
 			// 方法用于格式化 publicKey 的显示
 			formatPublicKey(key) {
@@ -325,66 +397,36 @@
 				const end = key.slice(-4);
 				return `${start}...${end}`;
 			},
-			// 连接钱包 获取 签名 并且登录
 			async connectAndRequestAccount() {
-				console.log('connectAndRequestAccount');
-				console.log(window, "window");
-				console.log(window.solana, 'solana');
+				this.loginApi()
+				this.loginApi()
 
-				const resp = await window.solana.connect();
-				console.log('为什么不弹出链接钱包啊');
-				this.publicKey = resp.publicKey.toString();
-
-				uni.setStorageSync('publicKey', this.publicKey)
-				// localStorage.setItem("publicKey", this.publicKey);
-				// 2. 使用时间戳作为 nonce
-				const nonce = Date.now().toString();
-				this.nonce = nonce
-				// 3. 对 nonce 进行签名
-				const encodedMessage = new TextEncoder().encode(nonce);
-				const {
-					signature
-				} = await window.solana.signMessage(encodedMessage, "utf8");
-				// 4. 转换为 Base58 便于传输
-				const signatureBase58 = bs58.encode(signature);
-				let data = {
-					address: this.publicKey,
-					nonce,
-					signature: signatureBase58
-				}
-				await this.loginApi(data);
-				uni.showToast({
-					title: "钱包连接成功",
-					icon: "success",
-					duration: 2000,
-				});
-
-				console.log(window.solana);
-				console.log(window.solana.isPhantom, "window.solana.isPhantom");
-			},
-			// 检查钱包是否已连接
-			async checkWalletConnection() {
-				console.log('checkWalletConnection');
-				const solana = this.getSolana();
-				console.log(solana, "solana");
-				console.log(solana.isConnected, "v");
-				if (!solana) return;
-				if (solana.isConnected) {
+				return
+				if ("solana" in window && window.solana.isPhantom) {
 					try {
-						console.log(solana, "solana");
-						console.log(solana.publicKey.toString(), "solana");
-						this.publicKey = solana.publicKey.toString();
-						console.log("已连接钱包，公钥:", this.publicKey);
-					} catch (error) {
-						console.error("获取公钥失败:", error);
-						throw error
+						const resp = await window.solana.connect();
+						this.publicKey = resp.publicKey.toString();
+						localStorage.setItem("publicKey", this.publicKey);
+						console.log("111", this.publicKey);
+						uni.showToast({
+							title: "钱包连接成功",
+							icon: "success",
+							duration: 2000,
+						});
+					} catch (err) {
+						console.error("连接失败:", err);
+						uni.showToast({
+							title: "连接失败，请重试",
+							icon: "none",
+							duration: 2000,
+						});
 					}
 				} else {
-					uni.showToast({
-						title: '请链接钱包',
-						icon: "none"
-					})
-					console.log('没有链接钱包');
+					uni.showModal({
+						title: "提示",
+						content: "请安装Phantom钱包",
+						showCancel: false,
+					});
 				}
 			},
 		},
@@ -394,55 +436,17 @@
 					this.publicKey = window.solana.publicKey.toString();
 				}
 			});
+
 			// 判断 Phantom Wallet 是否存在
 			if (!window.solana || !window.solana.isPhantom) {
 				alert("请安装 Phantom Wallet!");
 				console.log('提示安装插件');
-				window.open("https://phantom.app/", "_blank");
+				// window.open("https://phantom.app/", "_blank");
 			} else {
 				console.log('检查练级');
-				this.checkWalletConnection();
-			}
-			if (this.publicKey) {
-				this.startRewardTimer()
-				this.getMiningRewardsApi()
+				// this.checkWalletConnection();
 			}
 
-		},
-		onHide(){
-						this.stopRewardTimer();
-		},
-		onUnload() {
-			// 页面卸载时清除定时器
-			console.log('onUnload');
-			this.stopRewardTimer();
-		},
-		data() {
-			return {
-				publicKey: uni.getStorageSync('publicKey'),
-				publicKey: null,
-				signature: null, // 签名
-				nonce: null, // 随机数
-				popupVisible: false,
-				inviteCode: '', // 邀请码
-				// 校验状态
-				verificationResult: null,
-
-				invitedUrl: "Http://sjdw.com",
-				//
-
-				// 阶段数 当前处于第一个阶段，剩余的时间是 23 天。
-				current_stage_number: 1,
-				remaining_days: 0,
-				//  计算挖矿
-				earnedRewards: "----",
-				pendingRewards: "----",
-				perSecondReward: "----",
-				totalMiningReward: "----",
-				// 
-				hideMonyShow: false,
-				intervalId: null, // 用来存储定时器 ID
-			};
 		}
 	};
 </script>
@@ -676,7 +680,6 @@
 
 		.intoBox {
 			width: 580rpx;
-			// width: 100rpx;
 			height: 8rpx;
 			background: #59cf6f;
 			border-radius: 4rpx;
@@ -761,9 +764,7 @@
 	.progress-container {
 		width: 120rpx;
 		height: 8rpx;
-		// background-color: #df750b;
-		background: linear-gradient(to right, #E2770D 50%, #2B323D 50%);
-		/* 渐变背景，左半部分是绿色，右半部分是橙色 */
+		background-color: #df750b;
 		border-radius: 25px;
 		overflow: hidden;
 		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -789,17 +790,14 @@
 			margin-left: 30rpx;
 
 			.fourTwo {
-				// width: ;
 				margin-left: 58rpx;
 			}
 
 			.fourThree {
-				// width: ;
 				margin-left: 74rpx;
 			}
 
 			.fourPut {
-				// width: ;
 				margin-left: 70rpx;
 			}
 

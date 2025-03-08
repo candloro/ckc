@@ -11,9 +11,10 @@
 			<img src="/static/home/seven.png" alt="" class="down" />
 			<view class="" style="margin-left: 60rpx;color: white;font-size: 15px;">
 				<!--  是默认 1 是合约人 2 创世节点 -->
-				<text v-if="model.role == 0">默认</text>
+				{{model.role}}
+<!-- 				<text v-if="model.role == 0">默认</text>
 				<text v-if="model.role == 1">合约人 </text>
-				<text v-if="model.role == 2">创世节点</text>
+				<text v-if="model.role == 2">创世节点</text> -->
 			</view>
 		</view>
 		<view class="picBox">
@@ -81,19 +82,25 @@
 			async getUserInfoApi() {
 				let address = uni.getStorageSync('address')
 				let res = await getUserInfo(address)
+				console.log(res,"getUserInfoApi");
 				this.model = {
 					...this.model,
-					...res
+					...res.data
 				}
 			},
 			// 收益
 			async getHoldersRewardsApi() {
 				let address = uni.getStorageSync('address')
 				let res = await getHoldersRewards(address)
-				this.model = {...this.model,...res}
+				console.log(res,"getHoldersRewardsApi");
+				this.model = {...this.model,...res.data}
 			},
 			getBtn() {
 				console.log('领取');
+				uni.showToast({
+					title: '请等待ing..',
+					icon: 'none',
+				})
 			},
 			goBack() {
 				uni.navigateTo({
@@ -294,7 +301,8 @@
 	.submitBox {
 		width: 690rpx;
 		height: 88rpx;
-		background: #fcd434;
+	// 	background: #fcd434;
+		background: #29313C;
 		border-radius: 44rpx;
 		margin-top: 60rpx;
 		margin-left: 30rpx;

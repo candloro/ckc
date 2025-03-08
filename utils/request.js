@@ -52,23 +52,21 @@ service.interceptors.response.use(
 		const data = response.data
 		uni.hideLoading()
 		if (data.code != 200) {
-			// uni.showToast({
-			// 	title: data.message,
-			// 	icon: "error"
-			// })
+			uni.showToast({
+				title: data.message,
+				icon:"none"
+			})
 			/*  */
 			if (data.code == 502) {}
 			if (data.code == 403) {}
 			if (data.code == 401) {
 				console.log('401');
 			}
-
 		}
+		
 		/* 成功响应 */
-		if (data.code == 200) {
-			// console.log(data.data, "success 200");
-			return data.data
-		}
+		console.log(data, "success 200");
+		return data
 	},
 	err => {
 		uni.hideLoading()

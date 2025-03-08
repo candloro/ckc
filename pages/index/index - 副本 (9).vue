@@ -38,12 +38,11 @@
 		</view>
 		<view class="myBox">
 			<view class="my">我的资产</view>
-			<image src="../../static/home/eye1.png" @click="hideMony" class="eyes" />
+			<image src="../../static/home/eye1.png" class="eyes" />
 		</view>
 		<view class="boxTwo">
 			<view class="zeroBox">
-				<view class="zero" v-if="hideMonyShow">1165.59</view>
-				<view class="zero" v-else style="width: 286rpx;">******</view>
+				<view class="zero">1165.59</view>
 			</view>
 			<view class="zero1">
 				<view class="c">CXC</view>
@@ -64,21 +63,18 @@
 			</view>
 			<view class="fourRight">
 				<image src="/static/home/four.png" class="fourOne" />
-				<view class="fourTwo">
-					{{isString(totalMiningReward)?totalMiningReward: Number(totalMiningReward).toFixed(5)}}</view>
-				<view class="fourThree">{{isString(earnedRewards)?earnedRewards: Number(earnedRewards).toFixed(5)}}
-				</view>
-				<view class="fourPut">{{ isString(pendingRewards)?pendingRewards: Number(pendingRewards).toFixed(5)}}
-				</view>
+				<view class="fourTwo">2000cxc</view>
+				<view class="fourThree">1680cxc</view>
+				<view class="fourPut">335cxc</view>
 				<div class="progress-container">
 					<div class="progress-bar" id="progressBar">
-						<span class="progress-text" id="progressText">5%</span>
+						<span class="progress-text" id="progressText">0%</span>
 					</div>
 				</div>
 			</view>
 		</view>
 		<view class="boxFive">
-			<view class="force">算力挖矿</view>
+			<view class="force" @click="open">算力挖矿</view>
 			<view class="force1" @click="releaseRecord">释放记录 ></view>
 		</view>
 		<view class="boxSix">
@@ -115,21 +111,21 @@
 				</view>
 			</view>
 			<view class="intoBox">
-				<img class="chestBlue" v-if="current_stage_number == 1" src="/static/home/ChestBlue.png" alt="" />
-				<img class="chestRed" v-if="current_stage_number == 2" src="/static/home/ChestRed.png" alt="" />
+				<img class="chestBlue" src="/static/home/ChestBlue.png" alt="" />
+				<img class="chestRed" src="/static/home/ChestRed.png" alt="" />
 			</view>
 		</view>
 
 		<view class="copyBox">
 			<view class="copyBox1">
-				<image src="/static/home/five.png" class="copy3" @click="open" />
-				<view class="copy1" @click="open"> 邀请链接：{{invitedUrl}} </view>
+				<image src="/static/home/five.png" class="copy3" />
+				<view class="copy1"> 邀请链接：{{invitedUrl}} </view>
 				<view class="copy2" @click="copyUrlHandle">复制</view>
 			</view>
 		</view>
 
 		<!-- 测试 -->
-		<view class="" v-if="false">
+		<view class="" v-if="true">
 			<!-- 2 -->
 			<button @click="fakeLogin">fake login</button>
 		</view>
@@ -141,7 +137,7 @@
 					<view class="code">邀请码绑定</view>
 				</view>
 				<view class="please">
-					<input type="text" placeholder="请绑定邀请码" v-model="inviteCode" />
+					<input type="text" placeholder="请绑定邀请码" v-model="invitationCode" />
 				</view>
 				<view class="mustBox">
 					<view class="must">*必须绑定邀请码才能进入第二阶段挖矿</view>
@@ -167,10 +163,7 @@
 	import bs58 from "bs58"
 	import nacl from "tweetnacl";
 	import {
-		login,
-		getStagesInfo,
-		getMiningRewards,
-		bindInviteCode
+		login
 	} from '@/api/index.js'
 
 	// 
@@ -179,42 +172,29 @@
 	} from '@solana/web3.js';
 
 	export default {
+		data() {
+			return {
+				publicKey: null, // 钱包地址
+				signature: null, // 签名
+				nonce: null, // 随机数
+				popupVisible: false,
+				invitationCode: '', // 邀请码
+				// 校验状态
+				verificationResult: null,
+
+				invitedUrl: "Http://sjdw.com"
+			};
+		},
 		methods: {
-			isString(value) {
-				return typeof value === 'string';
-			},
-			hideMony() {
-				if (!this.publicKey) return
-				this.hideMonyShow = !this.hideMonyShow
-			},
-			startRewardTimer() {
-				// 每隔 5 秒调用一次 getMiningRewardsApi
-				this.intervalId = setInterval(() => {
-					this.getMiningRewardsApi();
-				}, 1000); // 5000 毫秒 = 5 秒
-			},
-			stopRewardTimer() {
-				if (this.intervalId) {
-					clearInterval(this.intervalId); // 清除定时器
-					this.intervalId = null;
+			// 
+			async getUserInfoApi() {
+				let address = uni.getStorageSync('address')
+				let res = await getUserInfo(address)
+				this.model = {
+					...this.model,
+					...res
 				}
 			},
-			// 计算挖矿算力奖励
-			async getMiningRewardsApi() {
-				let res = await getMiningRewards()
-				this.earnedRewards = res.data.earnedRewards
-				this.pendingRewards = res.data.pendingRewards
-				this.perSecondReward = res.data.perSecondReward
-				this.totalMiningReward = res.data.totalMiningReward
-			},
-			// 查询阶段信息 
-			async getStagesInfoApi() {
-				let res = await getStagesInfo()
-				this.current_stage_number = res.data.current_stage_number
-				this.remaining_days = res.data.remaining_days
-				console.log(res, 'getStagesInfo');
-			},
-			// 我的
 			goUserInfo() {
 				console.log('1231');
 				uni.navigateTo({
@@ -240,39 +220,73 @@
 					nonce,
 					signature
 				};
+				console.log(data, "data");
 				// 请求登录接口
 				try {
 					const response = await login(data); // 你的登录API方法
-					console.log("登录成功: 的女路", response);
-
-					if (response.data) {
-						setToken(response.data.token)
-						this.getStagesInfoApi()
-						// 开启定时其
-						this.startRewardTimer()
-						// 显示余额
-						this.hideMony()
+					console.log("登录成功:", response);
+					if (response.token) {
+						setToken(response.token)
 					}
 					// 进一步处理登录成功的响应，例如保存 token 或跳转等
 				} catch (error) {
 					console.error("登录失败:", error);
 				}
 			},
+			fakeLogin() {
+				async function main() {
+					// 1. 生成一个 Solana Keypair（相当于 Phantom 钱包）
+					// const keypair = Keypair.generate();
+					const keypair = Keypair.fromSecretKey(bs58.decode(
+						"QNzY4vFio5umzAJHgYqXRfqJqxRhCFKer7vBCGxokY7WBqUB4J5HySrgdF8WrPAcsHjjsVoJ6etzZeP4ous7n5X"
+						))
+					console.log("Public Key:", keypair.publicKey.toBase58());
+					console.log("Private Key:", bs58.encode(keypair.secretKey)); // 不要暴露这个！
 
-			// 确认邀请接口
-			async bindInviteCodeApi() {
-				const response = await bindInviteCode({
-					inviteCode: this.inviteCode
-				}); // 你的登录API方法
-				console.log('12312', response);
+					// 2. 使用时间戳作为 nonce
+					const nonce = Date.now().toString();
+
+					console.log("nonce:", nonce)
+					// 3. 使用 Solana 私钥进行 Ed25519 签名
+					const message = new TextEncoder().encode(nonce);
+					const signature = nacl.sign.detached(message, keypair.secretKey);
+
+					console.log("Signature:", bs58.encode(signature));
+
+					console.log("nonce:", nonce);
+
+					console.log("bs58.encode(message):", bs58.encode(message))
+					// 4. 发送请求到后端
+					const response = await fetch("http://47.84.41.231:3000/auth/login", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json"
+						},
+						body: JSON.stringify({
+							address: keypair.publicKey.toBase58(), // 钱包地址
+							signature: bs58.encode(signature), // 转换为 Base58
+							nonce: nonce, // 确保后端能够正确解析
+						}),
+					});
+
+					const data = await response.json();
+					console.log("JWT Token:", data);
+
+					// 5. 解析 Token
+					const payload = JSON.parse(Buffer.from(data.token.split(".")[1], "base64").toString());
+					const exp = payload.exp * 1000; // exp 是 Unix 时间戳（秒），转换成毫秒
+					console.log("exp:", exp);
+				}
+
+				main()
 
 			},
+
+
+
 			// 确认邀请
 			invitationCodeConfirm() {
 				console.log('231');
-				if (this.inviteCode) {
-					this.bindInviteCodeApi()
-				}
 				this.off()
 			},
 			purseBox() {
@@ -295,8 +309,6 @@
 				this.$refs.popup.close();
 			},
 			open() {
-				console.log('open');
-				this.inviteCode = ''
 				this.$refs.popup.open("center");
 			},
 			togglePopup() {
@@ -328,61 +340,73 @@
 			// 连接钱包 获取 签名 并且登录
 			async connectAndRequestAccount() {
 				console.log('connectAndRequestAccount');
-				console.log(window, "window");
-				console.log(window.solana, 'solana');
-
-				const resp = await window.solana.connect();
-				console.log('为什么不弹出链接钱包啊');
-				this.publicKey = resp.publicKey.toString();
-
-				uni.setStorageSync('publicKey', this.publicKey)
-				// localStorage.setItem("publicKey", this.publicKey);
-				// 2. 使用时间戳作为 nonce
-				const nonce = Date.now().toString();
-				this.nonce = nonce
-				// 3. 对 nonce 进行签名
-				const encodedMessage = new TextEncoder().encode(nonce);
-				const {
-					signature
-				} = await window.solana.signMessage(encodedMessage, "utf8");
-				// 4. 转换为 Base58 便于传输
-				const signatureBase58 = bs58.encode(signature);
-				let data = {
-					address: this.publicKey,
-					nonce,
-					signature: signatureBase58
+				console.log(window.solana.isPhantom,"window.solana.isPhantom");
+				if ("solana" in window && window.solana.isPhantom) {
+					console.log(window.solana.isPhantom,"window.solana.isPhantom");
+					try {
+						const resp = await window.solana.connect();
+						console.log('为什么不弹出链接钱包啊');
+						this.publicKey = resp.publicKey.toString();
+						localStorage.setItem("publicKey", this.publicKey);
+						// 2. 使用时间戳作为 nonce
+						const nonce = Date.now().toString();
+						this.nonce = nonce
+						// 3. 对 nonce 进行签名
+						const encodedMessage = new TextEncoder().encode(nonce);
+						const {
+							signature
+						} = await window.solana.signMessage(encodedMessage, "utf8");
+						// 4. 转换为 Base58 便于传输
+						const signatureBase58 = bs58.encode(signature);
+						let data = {
+							address: this.publicKey,
+							nonce,
+							signature: signatureBase58
+						}
+						await this.loginApi(data);
+						uni.showToast({
+							title: "钱包连接成功",
+							icon: "success",
+							duration: 2000,
+						});
+					} catch (err) {
+						console.error("连接失败:", err);
+						uni.showToast({
+							title: "连接失败，请重试",
+							icon: "none",
+							duration: 2000,
+						});
+					}
+				} else {
+					console.log('没有 Phantom钱包');
+					uni.showModal({
+						title: "提示",
+						content: "请安装Phantom钱包",
+						showCancel: false,
+					});
 				}
-				await this.loginApi(data);
-				uni.showToast({
-					title: "钱包连接成功",
-					icon: "success",
-					duration: 2000,
-				});
-
-				console.log(window.solana);
-				console.log(window.solana.isPhantom, "window.solana.isPhantom");
 			},
 			// 检查钱包是否已连接
 			async checkWalletConnection() {
 				console.log('checkWalletConnection');
 				const solana = this.getSolana();
-				console.log(solana, "solana");
-				console.log(solana.isConnected, "v");
+				console.log(solana,"solana");
+				console.log(solana.isConnected,"v");
 				if (!solana) return;
 				if (solana.isConnected) {
 					try {
-						console.log(solana, "solana");
-						console.log(solana.publicKey.toString(), "solana");
+						console.log(solana,"solana");
+						console.log(solana.publicKey.toString(),"solana");
 						this.publicKey = solana.publicKey.toString();
 						console.log("已连接钱包，公钥:", this.publicKey);
 					} catch (error) {
 						console.error("获取公钥失败:", error);
 						throw error
 					}
-				} else {
+				}else{
 					uni.showToast({
-						title: '请链接钱包',
-						icon: "none"
+						title:'请链接钱包',
+						icon:"none"
 					})
 					console.log('没有链接钱包');
 				}
@@ -403,46 +427,7 @@
 				console.log('检查练级');
 				this.checkWalletConnection();
 			}
-			if (this.publicKey) {
-				this.startRewardTimer()
-				this.getMiningRewardsApi()
-			}
 
-		},
-		onHide(){
-						this.stopRewardTimer();
-		},
-		onUnload() {
-			// 页面卸载时清除定时器
-			console.log('onUnload');
-			this.stopRewardTimer();
-		},
-		data() {
-			return {
-				publicKey: uni.getStorageSync('publicKey'),
-				publicKey: null,
-				signature: null, // 签名
-				nonce: null, // 随机数
-				popupVisible: false,
-				inviteCode: '', // 邀请码
-				// 校验状态
-				verificationResult: null,
-
-				invitedUrl: "Http://sjdw.com",
-				//
-
-				// 阶段数 当前处于第一个阶段，剩余的时间是 23 天。
-				current_stage_number: 1,
-				remaining_days: 0,
-				//  计算挖矿
-				earnedRewards: "----",
-				pendingRewards: "----",
-				perSecondReward: "----",
-				totalMiningReward: "----",
-				// 
-				hideMonyShow: false,
-				intervalId: null, // 用来存储定时器 ID
-			};
 		}
 	};
 </script>
@@ -676,7 +661,6 @@
 
 		.intoBox {
 			width: 580rpx;
-			// width: 100rpx;
 			height: 8rpx;
 			background: #59cf6f;
 			border-radius: 4rpx;
@@ -761,9 +745,7 @@
 	.progress-container {
 		width: 120rpx;
 		height: 8rpx;
-		// background-color: #df750b;
-		background: linear-gradient(to right, #E2770D 50%, #2B323D 50%);
-		/* 渐变背景，左半部分是绿色，右半部分是橙色 */
+		background-color: #df750b;
 		border-radius: 25px;
 		overflow: hidden;
 		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -789,17 +771,14 @@
 			margin-left: 30rpx;
 
 			.fourTwo {
-				// width: ;
 				margin-left: 58rpx;
 			}
 
 			.fourThree {
-				// width: ;
 				margin-left: 74rpx;
 			}
 
 			.fourPut {
-				// width: ;
 				margin-left: 70rpx;
 			}
 

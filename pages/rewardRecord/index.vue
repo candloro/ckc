@@ -51,7 +51,10 @@ export default {
 	  		}
 	  	let res =  await getTransactionsList(data)
 	  		console.log(res,'getTransactionsList');
-	  		this.list = res.transactions
+			if(res.data){
+				this.list = res.data.transactions
+			}
+
 	  },
     goBack() {
       uni.navigateTo({ url: "/pages/index/index" });
