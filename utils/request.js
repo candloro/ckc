@@ -52,10 +52,10 @@ service.interceptors.response.use(
 		const data = response.data
 		uni.hideLoading()
 		if (data.code != 200) {
-			uni.showToast({
-				title: data.message,
-				icon: "error"
-			})
+			// uni.showToast({
+			// 	title: data.message,
+			// 	icon: "error"
+			// })
 			/*  */
 			if (data.code == 502) {}
 			if (data.code == 403) {}
@@ -66,7 +66,7 @@ service.interceptors.response.use(
 		}
 		/* 成功响应 */
 		if (data.code == 200) {
-			console.log(data.data, "success 200");
+			// console.log(data.data, "success 200");
 			return data.data
 		}
 	},

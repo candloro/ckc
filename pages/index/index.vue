@@ -1,7 +1,7 @@
 <template>
 	<view class="content">
 		<view class="headerBox">
-			<view class="leftBox" >
+			<view class="leftBox" @click="goUserInfo" >
 				<image src="../../static/home/one.png" class="oneImage" />
 				<view class="hello">hi , cxc</view>
 			</view>
@@ -27,7 +27,7 @@
 				</view>
 			</view>
 		</view>
-		<view class="swystemBox" @click="goUserInfo">
+		<view class="swystemBox">
 			<view class="swystem">
 				<image src="../../static/home/two.png" class="threeImage" />
 				<view class="swystem1">系统公告</view>
@@ -127,7 +127,7 @@
 		<!-- 测试 -->
 		<view class="" v-if="true">
 			<!-- 2 -->
-			<button @click="testApi">testApi</button>
+			<button @click="testApi">fake login</button>
 		</view>
 
 
@@ -184,10 +184,17 @@
 			};
 		},
 		methods: {
+			// 
+			async getUserInfoApi(){
+				let address  = uni.getStorageSync('address')
+				let res =  await getUserInfo(address)
+				this.model = {...this.model,...res}
+			},
+			
 			goUserInfo() {
 				console.log('1231');
 				uni.navigateTo({
-					url:'/pages/my/my'
+					url:'/pages/claim/claim'
 				})
 			},
 
@@ -219,6 +226,7 @@
 						await this.getNonce(); // 连接后获取随机数
 					}
 				} catch (error) {
+					console.log(error,"error");
 					if (error.code === 4001) {
 						alert("用户拒绝了连接请求");
 					} else {
@@ -228,7 +236,22 @@
 			},
 			// 获取随机数
 			async getNonce() {
-				const nonce = Math.floor(Math.random() * 1e8).toString(); // 生成0到99999999之间的随机数
+				
+				function generateValidNonce() {
+				    const allowedChars = "123456789ABCDEFGHIJKLMNabcdefghijklmnopqrstuvwxyz";
+				    const length = Math.floor(Math.random() * (44 - 10 + 1)) + 10; // 随机生成一个10到44之间的长度
+				    let nonce = '';
+				
+				    for (let i = 0; i < length; i++) {
+				        const randomIndex = Math.floor(Math.random() * allowedChars.length);
+				        nonce += allowedChars[randomIndex];
+				    }
+				
+				    return nonce;
+				}
+				
+				// const nonce = Math.floor(Math.random() * 1e8).toString(); // 生成0到99999999之间的随机数
+				const nonce = generateValidNonce()
 				this.nonce = nonce
 				await this.requestSignature()
 				return nonce
@@ -237,32 +260,34 @@
 			async requestSignature() {
 				const solana = this.getSolana();
 				if (!solana) return;
-				console.log('请求签名中...');
-				const encodedMessage = new TextEncoder().encode(this.nonce);
+				console.log('请求签名中...',this.nonce);
 				
+				const encodedMessage = new TextEncoder().encode(this.nonce);
 				const {
 					signature
 				} = await solana.signMessage(encodedMessage, "utf8");
-				
-				
-				
-				console.log(signature,"signature");
-				
 				const base58Signature = bs58.encode(signature);
-				console.log("签名值（Base58）：", base58Signature);
+				this.signature = base58Signature
+								// return
 				
-				// await this.loginApi()
+		
+				// console.log("签名值（Base58）：", base58Signature);
+				
+				await this.loginApi()
 			},
 
 			// 登录接口
-			async loginApi() {
+			async loginApi(base58Signature) {
+
 				const data = {
-					address:  this.publicKey.toBase58(),
-					nonce:  bs58.encode(this.nonce),
-					signature:  bs58.encode(this.signature) ,
+					address:  this.publicKey,
+					// nonce:  bs58.encode(this.nonce),
+					nonce:  this.nonce,
+					signature:  this.signature,
+					// signature:  base58Signature ,
 				};
-				
-				console.log("登录数据:", data);
+										console.log("登录数据:", data);
+		
 
 				// 请求登录接口
 				try {
@@ -910,7 +935,8 @@
 		color: #ffffff;
 		line-height: 80rpx;
 		text-align: center;
-		margin-left: 60rpx;
+		// margin-left: 60rpx;
+		margin-left: 20rpx;
 	}
 
 	.lang {

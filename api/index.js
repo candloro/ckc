@@ -26,16 +26,15 @@ export const getMiningRewards = () => {
 }
 
 /* 获取奖励 */
-export const getHoldersRewards = () => {
+export const getHoldersRewards = (address) => {
   return request({
-    url: '/holders/rewards',
+    url: `/holders/rewards?address=${address}`,
     method: 'get',
   })
 }
 
 /* 获取用户信息 */
 export const getUserInfo = (address) => {
-	console.log(address,"address");
   return request({
     url: `/users/info?address=${address}`,
     method: 'get',
@@ -52,9 +51,10 @@ export const bindInviteCode = (inviteCode) => {
 }
 
 /* 获取交易记录 */
-export const getTransactionsList = () => {
+export const getTransactionsList = ({address ,type }) => {
+	console.log(type,"type");
   return request({
-    url: '/transactions/list',
+    url: `/transactions/list?address=${address}&type=${type}`,
     method: 'get',
   })
 }

@@ -20,15 +20,40 @@
 </template>
 
 <script>
+import { getTransactionsList } from '@/api/index.js'
 export default {
   data() {
-    return {};
+    return {
+		list:[],
+		type:0
+	};
   },
   methods: {
+	  async getTransactionsListApi(){
+	  	let address  = uni.getStorageSync('address')
+		let type = this.type
+		console.log(type,"type");
+		let data = {
+			address,
+			type
+		}
+	  	let res =  await getTransactionsList(data)
+		console.log(res,'getTransactionsList');
+		this.list = res.transactions
+	  },
     goBackTwo() {
       uni.navigateTo({ url: "/pages/index/index" });
     },
   },
+  onLoad(options) {
+	  if(options.type){
+		this.type = options.type
+	  }
+
+  },
+  onShow() {
+  	this.getTransactionsListApi()
+  }
 };
 </script>
 
