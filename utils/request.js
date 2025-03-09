@@ -33,11 +33,11 @@ service.interceptors.request.use(
 		}
 		/*  */
 		config.headers['Content-Type'] = "application/json"
-		uni.hideLoading()
+		// uni.hideLoading()
 		return config
 	},
 	err => {
-		uni.hideLoading()
+		// uni.hideLoading()
 		uni.showToast({
 			title: '请先登录',
 			icon: "none"
@@ -50,8 +50,10 @@ service.interceptors.response.use(
 	response => {
 		// console.log('原始响应', response);
 		const data = response.data
-		uni.hideLoading()
+		// uni.hideLoading()
 		if (data.code != 200) {
+			
+			console.log(data.message,"erroi");
 			uni.showToast({
 				title: data.message,
 				icon:"none"
@@ -60,16 +62,16 @@ service.interceptors.response.use(
 			if (data.code == 502) {}
 			if (data.code == 403) {}
 			if (data.code == 401) {
-				console.log('401');
+				// console.log('401');
 			}
 		}
 		
 		/* 成功响应 */
-		console.log(data, "success 200");
+		// console.log(data, "success 200");
 		return data
 	},
 	err => {
-		uni.hideLoading()
+		// uni.hideLoading()
 		uni.showToast({
 			title: '网络异常',
 			icon: "none"

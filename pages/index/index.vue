@@ -42,10 +42,10 @@
 		</view>
 		<view class="boxTwo">
 			<view class="zeroBox">
-				<view class="zero" v-if="hideMonyShow">1165.59</view>
+				<view class="zero" v-if="hideMonyShow">{{solLimit}}</view>
 				<view class="zero" v-else style="width: 286rpx;">******</view>
 			</view>
-			<view class="zero1">
+			<view class="zero1" v-if="false">
 				<view class="c">CXC</view>
 				<image src="../../static/home/down.png" class="down1" />
 			</view>
@@ -65,7 +65,8 @@
 			<view class="fourRight">
 				<image src="/static/home/four.png" class="fourOne" />
 				<view class="fourTwo">
-					{{isString(totalMiningReward)?totalMiningReward: Number(totalMiningReward).toFixed(5)}}</view>
+					{{isString(totalMiningReward)?totalMiningReward: Number(totalMiningReward).toFixed(5)}}
+				</view>
 				<view class="fourThree">{{isString(earnedRewards)?earnedRewards: Number(earnedRewards).toFixed(5)}}
 				</view>
 				<view class="fourPut">{{ isString(pendingRewards)?pendingRewards: Number(pendingRewards).toFixed(5)}}
@@ -98,19 +99,19 @@
 			</view>
 			<view class="blueBox">
 				<view class="oneDay">
-					<view class="time1">29</view>
+					<view class="time1">{{remaining_days}}</view>
 					<view class="time2">天 </view>
 				</view>
 				<view class="twoDay">
-					<view class="time1">03</view>
+					<view class="time1">{{hours}}</view>
 					<view class="time2">时</view>
 				</view>
 				<view class="threeDay">
-					<view class="time1">40</view>
+					<view class="time1">{{minutes}}</view>
 					<view class="time2">分</view>
 				</view>
 				<view class="fourDay">
-					<view class="time1">31</view>
+					<view class="time1">{{seconds}}</view>
 					<view class="time2">秒</view>
 				</view>
 			</view>
@@ -129,9 +130,10 @@
 		</view>
 
 		<!-- 测试 -->
-		<view class="" v-if="false">
+		<view class=""  v-if="false">
 			<!-- 2 -->
-			<button @click="fakeLogin">fake login</button>
+			<!-- <button @click="fakeLogin">fake login</button> -->
+			// <button @click="getSolBalance">fake login</button>
 		</view>
 
 
@@ -174,23 +176,59 @@
 	} from '@/api/index.js'
 
 	// 
-	import {
-		PublicKey
-	} from '@solana/web3.js';
-
+	import { Connection, PublicKey } from "@solana/web3.js";
+	// 使用 Solana 官方 RPC 节点
+	// const connection = new Connection("https://api.mainnet-beta.solana.com");
+	// https://dashboard.helius.dev/endpoints?projectId=a4010f16-27ec-4b93-80a8-dd78cde0d663
+const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=2fadc3bb-fda2-4c57-af9d-8a164f73f022");
 	export default {
 		methods: {
+			// rpc 查询我的资产
+			 async getSolBalance() {
+				if(this.solLimit) return
+			  try {
+				const walletAddress =  uni.getStorageSync('walletAddress')
+			    const publicKey = new PublicKey(walletAddress);				
+			    const balance = await connection.getBalance(publicKey);
+				if(balance){
+					this.solLimit = balance / 1e9
+				}else{
+					console.log('balance not exist');
+				}
+			    console.log("SOL 余额:", balance / 1e9, "SOL"); // Solana 以 lamports 计数，需除以 1e9
+			  } catch (error) {
+			    console.error("查询 SOL 余额失败:", error);
+			  }
+			},
 			isString(value) {
 				return typeof value === 'string';
 			},
 			hideMony() {
 				if (!this.publicKey) return
 				this.hideMonyShow = !this.hideMonyShow
+				this.getSolBalance()
+			},
+			formatTime(unit){
+			  return unit < 10 ? '0' + unit : unit;
 			},
 			startRewardTimer() {
 				// 每隔 5 秒调用一次 getMiningRewardsApi
 				this.intervalId = setInterval(() => {
+					// 获取当前的时分秒
+					const now = new Date();
+					const hours = now.getHours();
+					const minutes = now.getMinutes();
+					const seconds = now.getSeconds();
+					this.hours = this.formatTime(hours)
+					this.minutes = this.formatTime(minutes)
+					this.seconds = this.formatTime(seconds)
+					const timeString = `${this.formatTime(hours)}:${this.formatTime(minutes)}:${this.formatTime(seconds)}`;
+					// console.log(timeString,'timeString');
+					// getMiningRewards
+					// 查询算力挖矿奖励
 					this.getMiningRewardsApi();
+					// 查询阶段
+				// 	this.getStagesInfoApi();
 				}, 1000); // 5000 毫秒 = 5 秒
 			},
 			stopRewardTimer() {
@@ -212,7 +250,7 @@
 				let res = await getStagesInfo()
 				this.current_stage_number = res.data.current_stage_number
 				this.remaining_days = res.data.remaining_days
-				console.log(res, 'getStagesInfo');
+				// console.log(res, 'getStagesInfo');
 			},
 			// 我的
 			goUserInfo() {
@@ -328,11 +366,11 @@
 			// 连接钱包 获取 签名 并且登录
 			async connectAndRequestAccount() {
 				console.log('connectAndRequestAccount');
-				console.log(window, "window");
-				console.log(window.solana, 'solana');
-
+				// console.log(window, "window");
+				// console.log(window.solana, 'solana');
 				const resp = await window.solana.connect();
-				console.log('为什么不弹出链接钱包啊');
+				const walletAddress = resp.publicKey.toBase58()
+				uni.setStorageSync('walletAddress', walletAddress)
 				this.publicKey = resp.publicKey.toString();
 
 				uni.setStorageSync('publicKey', this.publicKey)
@@ -405,12 +443,12 @@
 			}
 			if (this.publicKey) {
 				this.startRewardTimer()
-				this.getMiningRewardsApi()
+				this.getStagesInfoApi() 
 			}
 
 		},
-		onHide(){
-						this.stopRewardTimer();
+		onHide() {
+			this.stopRewardTimer();
 		},
 		onUnload() {
 			// 页面卸载时清除定时器
@@ -429,11 +467,16 @@
 				verificationResult: null,
 
 				invitedUrl: "Http://sjdw.com",
-				//
+				// sol余额
+				solLimit:0,
 
 				// 阶段数 当前处于第一个阶段，剩余的时间是 23 天。
 				current_stage_number: 1,
 				remaining_days: 0,
+				// 时间
+				hours:0,
+				minutes:0,
+				seconds:0,
 				//  计算挖矿
 				earnedRewards: "----",
 				pendingRewards: "----",

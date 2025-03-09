@@ -187,6 +187,7 @@
 		background-size: 100%;
 		background-image: url("/static/home/nine.png");
 		margin-left: 30rpx;
+		margin-right: 30rpx;
 		margin-top: 30rpx;
 
 		.picOne {
@@ -291,7 +292,7 @@
 
 	.percentage {
 		position: absolute;
-		top: 37%;
+		top: 41%;
 		left: 40%;
 		right: 10px;
 		font-size: 72rpx;
