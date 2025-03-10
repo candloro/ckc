@@ -53,11 +53,11 @@ service.interceptors.response.use(
 		// uni.hideLoading()
 		if (data.code != 200) {
 			
-			console.log(data.message,"erroi");
-			uni.showToast({
-				title: data.message,
-				icon:"none"
-			})
+			console.log(data.message,"network ");
+			// uni.showToast({
+			// 	title: data.message,
+			// 	icon:"none"
+			// })
 			/*  */
 			if (data.code == 502) {}
 			if (data.code == 403) {}

@@ -31,6 +31,9 @@
 			<view class="swystem">
 				<image src="../../static/home/two.png" class="threeImage" />
 				<view class="swystem1">系统公告</view>
+				<view class="" style="color: white;margin-left: 20rpx;">
+					<!-- .................... -->
+				</view>
 			</view>
 		</view>
 		<view class="boxOne">
@@ -62,6 +65,9 @@
 				<view class="fourPut">待释放</view>
 				<view class="fourFive">距离上一名</view>
 			</view>
+			<view class="" style="height: 22rpx;">
+				
+			</view>
 			<view class="fourRight">
 				<image src="/static/home/four.png" class="fourOne" />
 				<view class="fourTwo">
@@ -84,20 +90,29 @@
 		</view>
 		<view class="boxSix">
 			<view class="earningsBox">
-				<view class="earnings">挖矿收益</view>
+				<view class="flex" style="display: flex;align-items: end;">
+					<view class="earnings">挖矿收益</view>
+					<view class="" v-if="!remaining_days" style="font-size: 14px; line-height: 14px;border: 1px solid;border-radius: 25rpx;padding: 5px;margin-left: 10px;color: white;">
+						未挖矿
+					</view>
+					<view class="" v-else='remaining_days' style="font-size: 14px; line-height: 14px;border: 1px solid;border-radius: 25rpx;padding: 5px;margin-left: 10px;color: white;">
+						挖矿中
+					</view>
+				</view>
+
 				<image src="/static/home/six.png" class="whitePic" />
 			</view>
 			<view class="dayBox">
 				<view class="day">
-					<view class="math1">157</view>
+					<view class="math1">{{isString(earnedRewards) ? 1231:Number(earnedRewards).toFixed(5)}}</view>
 					<view class="math2">今日收益</view>
 				</view>
 				<view class="day2">
-					<view class="math3">315</view>
+					<view class="math3">{{isString(pendingRewards) ? pendingRewards:Number(pendingRewards).toFixed(5)}}</view>
 					<view class="math4">待释放</view>
 				</view>
 			</view>
-			<view class="blueBox">
+			<view class="blueBox" v-if="remaining_days">
 				<view class="oneDay">
 					<view class="time1">{{remaining_days}}</view>
 					<view class="time2">天 </view>
@@ -115,13 +130,19 @@
 					<view class="time2">秒</view>
 				</view>
 			</view>
-			<view class="intoBox">
+			<view class="" style="height: 60rpx;">
+				
+			</view>
+			<view class="intoBox" v-if="remaining_days">
 				<img class="chestBlue" v-if="current_stage_number == 1" src="/static/home/ChestBlue.png" alt="" />
-				<img class="chestRed" v-if="current_stage_number == 2" src="/static/home/ChestRed.png" alt="" />
+				<img class="chestRed" @click="open"  v-if="current_stage_number == 2" src="/static/home/ChestRed.png" alt="" />
+			</view>
+			<view class="" style="height: 60rpx;">
+				
 			</view>
 		</view>
 
-		<view class="copyBox">
+		<view class="copyBox" v-if="true">
 			<view class="copyBox1">
 				<image src="/static/home/five.png" class="copy3" @click="open" />
 				<view class="copy1" @click="open"> 邀请链接：{{invitedUrl}} </view>
@@ -562,8 +583,10 @@ const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=2fadc
 
 	.boxSix {
 		width: 690rpx;
-		height: 577rpx;
-		background-image: url("/static//home/blue.png");
+		// height: 577rpx;
+		// background-image: url("/static//home/blue.png");
+		background-color: #2A58FF;
+		border-radius: 30rpx;
 		background-size: 100%;
 		margin: 30rpx;
 		position: relative;
@@ -719,14 +742,13 @@ const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=2fadc
 
 		.intoBox {
 			width: 580rpx;
-			// width: 100rpx;
 			height: 8rpx;
-			background: #59cf6f;
+			// background: #59cf6f;
+			// background: red;
+			background: linear-gradient(to right, #7EDB6A 50%, #001EAE 50%);
 			border-radius: 4rpx;
-			margin-top: 60rpx;
-			margin-left: 55rpx;
+			margin:  0 auto;
 			position: relative;
-
 			.chestBlue {
 				position: absolute;
 				top: -300%;
@@ -854,10 +876,13 @@ const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=2fadc
 		.fourRight {
 			display: flex;
 			font-weight: 300;
-			font-size: 36rpx;
+			// font-size: 36rpx;
+			font-size: 30rpx;
 			color: #ffffff;
-			margin-top: 22rpx;
-			margin-left: 20rpx;
+			// margin-left: 20rpx;
+			// justify-content: space-around;
+			width: 640rpx;
+			margin: 0 auto;
 
 			.fourOne {
 				width: 68rpx;
@@ -865,19 +890,29 @@ const connection = new Connection("https://mainnet.helius-rpc.com/?api-key=2fadc
 			}
 
 			.fourTwo {
-				margin-left: 30rpx;
+				text-align: center;
+				width: 30%;
+				// width: 92rpx;
+				// margin-left: 30rpx;
 			}
 
 			.fourThree {
-				margin-left: 25rpx;
+				width: 30%;
+				text-align: center;
+				// width: 92rpx;
+				// margin-left: 25rpx;
 			}
 
 			.fourPut {
-				margin-left: 25rpx;
+				width: 30%;
+				text-align: center;
+				// width: 92rpx;
+				// margin-left: 25rpx;
 			}
 
 			.fourFive {
-				margin-left: 50rpx;
+				width: 20%;
+				// margin-left: 50rpx;
 			}
 		}
 	}

@@ -11,6 +11,7 @@
 			<img src="/static/home/seven.png" alt="" class="down" />
 			<view class="" style="margin-left: 60rpx;color: white;font-size: 15px;">
 				<!--  是默认 1 是合约人 2 创世节点 -->
+				<!--  0 是默认 1 是合约人 2 创世节点 -->
 				{{model.role}}
 <!-- 				<text v-if="model.role == 0">默认</text>
 				<text v-if="model.role == 1">合约人 </text>
@@ -39,11 +40,15 @@
 				</view>
 			</view>
 			<!--  -->
+			<view class="" style="height: 60rpx;">
+				
+			</view>
 			<view class="progress-container">
 				<view class="progress-bar" :style="{ width: progress + '%' }"></view>
 				<text class="percentage">{{ progress }}%</text>
 			</view>
 		</view>
+		<!-- 合约 -->
 		<view class="submitBox" @click="getBtn">
 			<view class="submit">领取</view>
 		</view>
@@ -278,9 +283,10 @@
 		align-items: center;
 		background-color: #333;
 		border-radius: 10px;
-		overflow: hidden;
+		// overflow: hidden;
 		margin-left: 45rpx;
-		margin-top: 60rpx;
+		// margin-top: 60rpx;
+		position: relative;
 	}
 
 	.progress-bar {
@@ -292,7 +298,7 @@
 
 	.percentage {
 		position: absolute;
-		top: 41%;
+		// top: 41%;
 		left: 40%;
 		right: 10px;
 		font-size: 72rpx;
